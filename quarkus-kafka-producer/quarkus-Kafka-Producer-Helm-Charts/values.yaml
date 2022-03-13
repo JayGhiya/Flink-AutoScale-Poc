@@ -1,0 +1,101 @@
+# Default values for quarkus-kafka-producer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+
+image:
+  repository: ghiya6548/bumblebee-ghiya-registry
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "quarkus-kafka-producer-v1"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+config:
+  kafka:
+    host: one-node-external.flink-poc.svc.cluster.local:9092
+
+pod:
+  env:
+    - name: KAFKA_BROKER_URL
+      value: "{{ .Values.config.kafka.host }}"
+    - name: KAFKA_INPUT_TOPIC_FOR_IOT_HUB
+      value: "flink-poc"
+    - name: JVM_OPTS
+      value: "-Xmx90m -Xloggc:quarkus-iot-helper-gc.log"
+    - name: PAYLOAD_FREQUENCY_MS
+      value: "600"       
+
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations:
+  prometheus.io/path: "/q/metrics"
+  prometheus.io/port: '8080'
+  prometheus.io/scrape: 'true'
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: 
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 0.5
+    memory: 100Mi
+  requests:
+    cpu: 0.1
+    memory: 60Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

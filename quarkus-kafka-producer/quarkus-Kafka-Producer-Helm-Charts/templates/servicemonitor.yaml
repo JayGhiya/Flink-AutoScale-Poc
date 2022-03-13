@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: quarkus-kafka-producer-service-monitor
+  labels:
+    release: bumblebee-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: quarkus-kafka-producer
+      app.kubernetes.io/name: quarkus-kafka-producer
+  namespaceSelector:
+    matchNames:
+      - default   
+  endpoints:
+    - port: http
+      interval: "10s"
+      path: /q/metrics
+      honorLabels: true

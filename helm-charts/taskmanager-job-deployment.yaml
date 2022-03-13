@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+  labels:
+    k8s-app : flink-taskmanager
+spec:
+  replicas: 1 # here, we configure the scale
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+      k8s-app : flink-taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+        k8s-app : flink-taskmanager
+    spec:
+      containers:
+      - name: taskmanager
+        image: ghiya6548/bumblebee-ghiya-registry:flink-auto-scale-v0.11
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 250m
+          limits:
+            cpu: 500m
+        env:
+        args: ["taskmanager"]
+        ports:
+        - containerPort: 6122
+          name: rpc
+        - containerPort: 6125
+          name: query-state
+        - containerPort: 9249
+          name: http-metrics  
+        livenessProbe:
+          tcpSocket:
+            port: 6122
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf/
+        securityContext:
+          runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+          items:
+          - key: flink-conf.yaml
+            path: flink-conf.yaml
+          - key: log4j-console.properties
+            path: log4j-console.properties

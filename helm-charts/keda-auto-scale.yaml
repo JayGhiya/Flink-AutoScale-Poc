@@ -1,0 +1,25 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: flink-consumer-scaled
+spec:
+  scaleTargetRef:
+    name: flink-taskmanager # (1)
+  cooldownPeriod: 30 # (2)
+  maxReplicaCount:  2 # (3)
+  advanced:
+    horizontalPodAutoscalerConfig: # (4)
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 30
+          policies:
+            - type: Percent
+              value: 50
+              periodSeconds: 30
+  triggers: # (5)
+    - type: prometheus
+      metadata:
+        serverAddress: http://bumblebee-prometheus-kube-prometheus.default.svc.cluster.local:9090
+        metricName: kafka_producer_outgoing_byte_rate
+        threshold: "5000"
+        query: kafka_producer_outgoing_byte_rate{container="quarkus-kafka-producer"}
